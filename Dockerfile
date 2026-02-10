@@ -1,4 +1,4 @@
-FROM python:3.11-alpine AS builder
+FROM python:3.13-alpine AS builder
 LABEL authors="freddo"
 
 WORKDIR /srv/
@@ -10,9 +10,9 @@ RUN apk add \
       python3-dev \
       libpq-dev
 
-RUN pip wheel --no-cache-dir --wheel-dir /wheels mysql psycopg2
+RUN pip wheel --no-cache-dir --wheel-dir /wheels mysqlclient psycopg2
 
-FROM python:3.11-alpine
+FROM python:3.13-alpine
 
 WORKDIR /srv/
 

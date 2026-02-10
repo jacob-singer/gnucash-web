@@ -29,7 +29,10 @@ setup(
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 3 :: Only',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
         'Topic :: Internet :: WWW/HTTP :: WSGI :: Application'
     ],
     keywords=['bootstrap', 'flask', 'web', 'gnucash'],
@@ -50,22 +53,21 @@ setup(
         ],
     },
 
-    # Because of datetime.date.fromisoformat (3.7) and importlib.metadata (3.8)
-    # Piecash requires <3.12 until e9faaa3 is included in release over there
-    python_requires=">=3.8,<3.12",
+    # Python 3.10+ required for modern Flask/Werkzeug compatibility
+    python_requires=">=3.10",
 
-    # Flask <2.3 was previously required for encrypted_session (removed)
-    # Werkzeug <3.0.0 is required for Flask, see https://stackoverflow.com/a/77214086
+    # piecash 1.2.1 requires SQLAlchemy 1.x (does not support 2.0 yet)
     install_requires=[
-        'Flask>=2.0.2',
-        'Werkzeug<3.0.0',
+        'Flask>=3.0.0',
+        'Werkzeug>=3.0.0',
         'piecash>=1.2.0',
+        'SQLAlchemy>=1.4,<2.0',
         'babel>=2.9.1',
         'requests>=2.27.1',
     ],
     extras_require={
         'pgsql': 'psycopg2',
-        'mysql': 'mysql',
+        'mysql': 'mysqlclient',
     },
 
     entry_points={
