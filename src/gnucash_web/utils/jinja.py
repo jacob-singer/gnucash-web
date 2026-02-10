@@ -159,7 +159,10 @@ def safe_balance(account):
             try:
                 child_balance = safe_balance(child)
                 if child_balance is not None:
-                    factor = child.commodity.currency_conversion(account.commodity)
+                    if child.commodity == account.commodity:
+                        factor = Decimal(1)
+                    else:
+                        factor = child.commodity.currency_conversion(account.commodity)
                     balance += child_balance * factor
             except GncConversionError:
                 continue

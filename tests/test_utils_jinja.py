@@ -290,3 +290,126 @@ class TestSafeBalance:
 
         result = safe_balance(account)
         assert result == Decimal("300")
+
+    def test_fallback_includes_same_commodity_children(self):
+        """Fallback should include children with same commodity (no conversion needed).
+
+        This is the key bug fix: piecash's currency_conversion() raises
+        GncConversionError when converting a commodity to itself (e.g., USD to USD).
+        The fallback must detect this case and use a factor of 1.
+        """
+        from piecash._common import GncConversionError
+
+        usd = MagicMock()
+
+        # Child with same commodity (USD), get_balance works fine
+        child_checking = MagicMock()
+        child_checking.get_balance.return_value = Decimal("500.00")
+        child_checking.commodity = usd
+
+        # Child with inconvertible commodity (no prices)
+        bad_commodity = MagicMock()
+        bad_commodity.currency_conversion.side_effect = GncConversionError("Cannot convert")
+        child_bad = MagicMock()
+        child_bad.get_balance.return_value = Decimal("1000")
+        child_bad.commodity = bad_commodity
+        child_bad.children = []
+
+        # Parent account: get_balance fails because of the bad child
+        account = MagicMock()
+        account.get_balance.side_effect = GncConversionError("Cannot convert")
+        account.commodity = usd
+        account.splits = []
+        account.children = [child_checking, child_bad]
+
+        result = safe_balance(account)
+        # Should include child_checking's $500 but skip the inconvertible child
+        assert result == Decimal("500.00")
+
+    def test_fallback_includes_convertible_children(self):
+        """Fallback should include children with different but convertible commodities."""
+        from piecash._common import GncConversionError
+
+        usd = MagicMock()
+        stock_commodity = MagicMock()
+        # Stock has a price: 1 share = $100
+        stock_commodity.currency_conversion.return_value = Decimal("100.00")
+
+        # Stock child: 10 shares
+        child_stock = MagicMock()
+        child_stock.get_balance.return_value = Decimal("10")
+        child_stock.commodity = stock_commodity
+
+        # USD child: $200
+        child_usd = MagicMock()
+        child_usd.get_balance.return_value = Decimal("200.00")
+        child_usd.commodity = usd
+
+        # Parent: fails due to some other inconvertible child
+        bad_commodity = MagicMock()
+        bad_commodity.currency_conversion.side_effect = GncConversionError("Cannot convert")
+        child_bad = MagicMock()
+        child_bad.get_balance.return_value = Decimal("9999")
+        child_bad.commodity = bad_commodity
+        child_bad.children = []
+
+        account = MagicMock()
+        account.get_balance.side_effect = GncConversionError("Cannot convert")
+        account.commodity = usd
+        account.splits = []
+        account.children = [child_stock, child_usd, child_bad]
+
+        result = safe_balance(account)
+        # 10 shares * $100/share + $200 = $1200, bad child skipped
+        assert result == Decimal("1200.00")
+
+    def test_fallback_with_nested_fallback(self):
+        """Fallback should work recursively when nested accounts also need fallback.
+
+        Simulates: Assets (USD) -> Points (USD) -> [AA Points (convertible), Delta (not convertible)]
+        """
+        from piecash._common import GncConversionError
+
+        usd = MagicMock()
+        aa_commodity = MagicMock()
+        aa_commodity.currency_conversion.return_value = Decimal("0.01")  # 1 point = $0.01
+        delta_commodity = MagicMock()
+        delta_commodity.currency_conversion.side_effect = GncConversionError("No price")
+
+        # Leaf: AA Points (5000 points, convertible)
+        child_aa = MagicMock()
+        child_aa.get_balance.return_value = Decimal("5000")
+        child_aa.commodity = aa_commodity
+        child_aa.children = []
+
+        # Leaf: Delta SkyMiles (10000 points, NOT convertible)
+        child_delta = MagicMock()
+        child_delta.get_balance.return_value = Decimal("10000")
+        child_delta.commodity = delta_commodity
+        child_delta.children = []
+
+        # Points parent (USD): get_balance fails because of Delta
+        points_account = MagicMock()
+        points_account.get_balance.side_effect = GncConversionError("Cannot convert")
+        points_account.commodity = usd
+        points_account.splits = []
+        points_account.children = [child_aa, child_delta]
+
+        # Checking (USD): works fine
+        checking = MagicMock()
+        checking.get_balance.return_value = Decimal("1000.00")
+        checking.commodity = usd
+
+        # Assets parent (USD): get_balance fails because Points fails
+        assets = MagicMock()
+        assets.get_balance.side_effect = GncConversionError("Cannot convert")
+        assets.commodity = usd
+        assets.splits = []
+        assets.children = [checking, points_account]
+
+        result = safe_balance(assets)
+        # Checking: $1000 (same commodity, factor = 1)
+        # Points: safe_balance = 5000 * 0.01 = $50 (AA converted, Delta skipped)
+        # Points has same commodity (USD), so factor = 1
+        # Total: $1000 + $50 = $1050
+        assert result == Decimal("1050.00")
