@@ -2,7 +2,7 @@ version: '3.11'
 
 services:
   app:
-    image: ghcr.io/joshuabach/gnucash-web:main
+    image: gnucash-web:latest
     environment:
       SECRET_KEY: '00000000'
 
