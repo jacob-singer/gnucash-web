@@ -61,8 +61,8 @@ def money(eval_ctx, amount, commodity):
     :returns: HTML snippet
 
     """
-    if numbers.get_currency_symbol(commodity.mnemonic) != commodity.mnemonic:
-        value = numbers.format_currency(amount, commodity.mnemonic)
+    if numbers.get_currency_symbol(commodity.mnemonic, locale='en_US') != commodity.mnemonic:
+        value = numbers.format_currency(amount, commodity.mnemonic, locale='en_US')
     else:
         value = f"{amount} {commodity.mnemonic}"
 

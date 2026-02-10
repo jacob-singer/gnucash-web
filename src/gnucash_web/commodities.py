@@ -31,7 +31,7 @@ def format_price(price):
     :returns: Human-readable string
 
     """
-    return numbers.format_currency(price.value, price.currency.mnemonic)
+    return numbers.format_currency(price.value, price.currency.mnemonic, locale='en_US')
 
 
 @bp.cli.command("list")
