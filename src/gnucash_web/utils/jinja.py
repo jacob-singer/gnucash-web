@@ -1,5 +1,6 @@
 """Utilities for templates."""
 import re
+from decimal import Decimal
 from urllib.parse import quote_plus
 from itertools import islice, accumulate
 from math import copysign
@@ -8,6 +9,7 @@ from flask import url_for
 from babel import numbers
 from markupsafe import Markup, escape
 from jinja2 import Environment, BaseLoader, pass_eval_context
+from piecash._common import GncConversionError
 
 
 def safe_display_string(string):
@@ -132,3 +134,33 @@ def contra_splits(split):
 def nth(iterable, n, default=None):
     "Returns the nth item or a default value"
     return next(islice(iterable, n, None), default)
+
+
+def safe_balance(account):
+    """Get the balance of an account, handling inconvertible commodities gracefully.
+
+    When child accounts use commodities that cannot be converted to the parent
+    account's commodity (e.g., loyalty points vs. USD), piecash raises a
+    GncConversionError. This function catches that error and falls back to
+    summing only the account's own splits, excluding inconvertible children.
+
+    Args:
+        account: A piecash Account object
+
+    Returns:
+        The account balance as a Decimal, or None if the balance cannot be
+        computed at all
+    """
+    try:
+        return account.get_balance()
+    except GncConversionError:
+        balance = sum(split.value for split in account.splits)
+        for child in account.children:
+            try:
+                child_balance = safe_balance(child)
+                if child_balance is not None:
+                    factor = child.commodity.currency_conversion(account.commodity)
+                    balance += child_balance * factor
+            except GncConversionError:
+                continue
+        return balance
