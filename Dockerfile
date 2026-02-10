@@ -10,7 +10,7 @@ RUN apk add \
       python3-dev \
       libpq-dev
 
-RUN pip wheel --no-cache-dir --wheel-dir /wheels mysql pycryptodome psycopg2
+RUN pip wheel --no-cache-dir --wheel-dir /wheels mysql psycopg2
 
 FROM python:3.11-alpine
 

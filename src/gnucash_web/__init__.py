@@ -10,9 +10,6 @@ from . import auth, book, commodities
 from .utils import jinja as jinja_utils
 from .config import GnuCashWebConfig
 
-from encrypted_session import EncryptedSessionInterface
-
-
 def create_app(test_config=None):
     """Create Flask app.
 
@@ -27,10 +24,6 @@ def create_app(test_config=None):
 
     if not app.debug:
         app.logger.setLevel(app.config.LOG_LEVEL)
-
-    # We encrypt the session-cookie, so the DB-password is not stored in plaintext
-    # when using AUTH_MECHANISM == 'passthrough'.
-    app.session_interface = EncryptedSessionInterface()
 
     if test_config is None:
         # load the instance config, if it exists, when not testing

@@ -69,17 +69,6 @@ class GnuCashWebConfig(Config):
                 **self, uri="@".join(elt for elt in [auth, location] if elt)
             )
 
-    @property
-    def SESSION_CRYPTO_KEY(self):
-        """Get key for EncryptedSession.
-
-        We simply use the Flask SECRET_KEY here.
-
-        :returns: 32-bit AES key as bytes
-
-        """
-        return self["SECRET_KEY"]
-
     def __getattr__(self, attr):
         """Entry point to get config options from gnucash_web code.
 
