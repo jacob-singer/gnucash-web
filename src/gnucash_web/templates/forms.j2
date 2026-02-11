@@ -97,18 +97,27 @@
         </div>
       </div>
 
-      {# Submit button and sign input #}
+      {# Submit button and sign input - labels depend on account type #}
+      {# For INCOME/EXPENSE accounts, the semantics are reversed from ASSET/LIABILITY accounts #}
+      {% if account.type in ['INCOME', 'EXPENSE'] %}
+        {% set positive_label = 'Charge' if account.type == 'EXPENSE' else 'Receive' %}
+        {% set negative_label = 'Refund' if account.type == 'EXPENSE' else 'Pay Out' %}
+      {% else %}
+        {% set positive_label = 'Deposit' %}
+        {% set negative_label = 'Withdraw' %}
+      {% endif %}
+      
       <div class="row">
         <div class="d-grid">
           {% if submit_btn %}
             <div class="btn-group mt-1" role="group">
               <button class="btn btn-outline-secondary" form="{{ id }}_transaction" name="sign"
                       type="submit" value="+1">
-                      Deposit
+                      {{ positive_label }}
               </button>
               <button class="btn btn-outline-danger" form="{{ id }}_transaction" name="sign"
                       type="submit" value="-1">
-                      Withdraw
+                      {{ negative_label }}
               </button>
             </div>
           {% else %}
@@ -117,14 +126,14 @@
                      form="{{ id }}_transaction" autocomplete="off"
                      id="{{ id }}-transaction-sign-deposit">
               <label class="btn btn-outline-secondary btn-sm" for="{{ id }}-transaction-sign-deposit">
-                Deposit
+                {{ positive_label }}
               </label>
 
               <input type="radio" class="btn-check" name="sign" value="-1"
                      form="{{ id }}_transaction" autocomplete="off"
                      id="{{ id }}-transaction-sign-withdraw">
               <label class="btn btn-outline-danger btn-sm" for="{{ id }}-transaction-sign-withdraw">
-                Withdrawal
+                {{ negative_label }}
               </label>
             </div>
           {% endif %}
