@@ -17,6 +17,13 @@
       </div>
     </div>
 
+    {# Notes row (double-line entry) #}
+    {% if split.transaction.notes %}
+      <div class="row">
+        <div class="col-12 text-muted fst-italic small">{{ split.transaction.notes }}</div>
+      </div>
+    {% endif %}
+
     {# Second row: date and contra accounts #}
     <div class="row align-items-center justify-content-between">
       <div class="col-3">
@@ -45,6 +52,11 @@
         <div class="row">
           <div class="col fw-bolder">{{ split.transaction.description }}</div>
         </div>
+        {% if split.transaction.notes %}
+          <div class="row">
+            <div class="col text-muted fst-italic small">{{ split.transaction.notes }}</div>
+          </div>
+        {% endif %}
         <div class="row">
           <div class="col">
             {{ split.transaction.post_date -}}
@@ -75,7 +87,8 @@
                                  "{{- split.transaction.description -}}",
                                  {{- split.value | abs -}},
                                  {{- split.transaction.post_date -}},
-                                 "{{- (split|contrasplits|map(attribute='account.fullname')|list)[0] -}}");'>
+                                 "{{- (split|contrasplits|map(attribute='account.fullname')|list)[0] -}}",
+                                 "{{- split.transaction.notes or '' -}}");'>
             </button>
           </div>
 
@@ -99,7 +112,8 @@
                     data-bs-transaction-value="{{ split.value|abs }}"
                     data-bs-transaction-sign="{{ split.value / split.value|abs  }}"
                     data-bs-transaction-post-date="{{ split.transaction.post_date }}"
-                    data-bs-transaction-contra-account="{{ (split|contrasplits|map(attribute='account.fullname')|list)[0] }}">
+                    data-bs-transaction-contra-account="{{ (split|contrasplits|map(attribute='account.fullname')|list)[0] }}"
+                    data-bs-transaction-notes="{{ split.transaction.notes or '' }}">
             </button>
           </div>
 

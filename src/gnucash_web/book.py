@@ -1,4 +1,5 @@
 """Functions for interacting with a GnuCash book."""
+
 from datetime import date
 from decimal import Decimal, InvalidOperation
 from urllib.parse import unquote_plus, urlencode
@@ -69,12 +70,14 @@ def show_account(account_name):
     """
     try:
         account_name = ":".join(unquote_plus(name) for name in account_name.split("/"))
-        page = int(request.args.get('page', 1))
+        page = int(request.args.get("page", 1))
     except ValueError as e:
-        raise BadRequest(f'Invalid query parameter: {e}') from e
+        raise BadRequest(f"Invalid query parameter: {e}") from e
 
     if page < 1:
-        raise BadRequest(f'Invalid query parameter: page number must be positive integer: {page}')
+        raise BadRequest(
+            f"Invalid query parameter: page number must be positive integer: {page}"
+        )
 
     with open_book(
         uri_conn=app.config.DB_URI(*get_db_credentials()),
@@ -87,9 +90,13 @@ def show_account(account_name):
             else book.root_account
         )
 
-        num_pages = max(1, ceil(len(account.splits) / app.config.TRANSACTION_PAGE_LENGTH))
+        num_pages = max(
+            1, ceil(len(account.splits) / app.config.TRANSACTION_PAGE_LENGTH)
+        )
         if page > num_pages:
-            raise BadRequest(f'Invalid query parameter: not enough pages: {page} > {num_pages}')
+            raise BadRequest(
+                f"Invalid query parameter: not enough pages: {page} > {num_pages}"
+            )
 
         return render_template(
             "account.j2",
@@ -128,6 +135,7 @@ def add_transaction():
         value = Decimal(request.form["value"])
         contra_account_name = request.form["contra_account_name"]
         sign = int(request.form["sign"])
+        notes = request.form.get("notes", "")
     except (InvalidOperation, ValueError) as e:
         # TODO: Say which parameter the error is about
         raise BadRequest(f"Invalid form parameter: {e}") from e
@@ -148,7 +156,7 @@ def add_transaction():
 
         if value < 0:
             raise BadRequest(f"Value {value} must not be negative")
-        value = sign*value
+        value = sign * value
 
         # TODO: Support accounts with different currencies
         assert account.commodity == contra_account.commodity, (
@@ -165,6 +173,7 @@ def add_transaction():
         _ = Transaction(
             currency=common_currency,
             description=description,
+            notes=notes if notes else None,
             post_date=transaction_date,
             splits=[
                 Split(account=account, value=value),
@@ -203,6 +212,7 @@ def edit_transaction():
         value = Decimal(request.form["value"])
         contra_account_name = request.form["contra_account_name"]
         sign = int(request.form["sign"])
+        notes = request.form.get("notes", "")
     except (InvalidOperation, ValueError) as e:
         # TODO: Say which parameter the error is about
         raise BadRequest(f"Invalid form parameter: {e}") from e
@@ -227,7 +237,7 @@ def edit_transaction():
 
         if value < 0:
             raise BadRequest(f"Value {value} must not be negative")
-        value = sign*value
+        value = sign * value
 
         # TODO: Support accounts with different currencies
         assert account.commodity == contra_account.commodity, (
@@ -237,6 +247,7 @@ def edit_transaction():
 
         transaction.description = description
         transaction.post_date = transaction_date
+        transaction.notes = notes if notes else None
         transaction.splits = [
             Split(account=account, value=value),
             Split(account=contra_account, value=-value),

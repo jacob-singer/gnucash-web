@@ -38,6 +38,8 @@ document.addEventListener("DOMContentLoaded", function(){
             .attr("value", button.getAttribute('data-bs-transaction-value'));
         $("input[form=edit_transaction][name=date]")
             .attr("value", button.getAttribute('data-bs-transaction-post-date'));
+        $("input[form=edit_transaction][name=notes]")
+            .attr("value", button.getAttribute('data-bs-transaction-notes'));
 
         editTransactionModal.reset = function() {
             // Reset classic form inputs
@@ -91,8 +93,9 @@ document.addEventListener("DOMContentLoaded", function(){
     })
 });
 
-function transaction_recycle(description, value, postDate, contraAccount) {
+function transaction_recycle(description, value, postDate, contraAccount, notes) {
     $("input[form=new_transaction][name=description]")[0].value = description;
     $("input[form=new_transaction][name=value]")[0].value = value;
+    $("input[form=new_transaction][name=notes]")[0].value = notes || '';
     $("select[form=new_transaction][name=contra_account_name]")[0].selectize.addItem(contraAccount);
 }
